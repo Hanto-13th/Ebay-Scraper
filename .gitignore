@@ -1,0 +1,17 @@
+#variable d'environnement !!! NE SURTOUT PAS PARTAGER, CLE DE SECURITE SENSIBLE !!!
+.env
+
+#environnement virtuel
+.venv/
+
+#fichier txt de cheminement
+step.txt
+
+#autres dossiers et fichiers
+__pycache__/
+.idea/
+
+*.pyc
+*.pyo
+*.pyd
+*.swp
