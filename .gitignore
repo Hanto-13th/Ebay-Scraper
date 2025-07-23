@@ -1,6 +1,10 @@
 #variable d'environnement !!! NE SURTOUT PAS PARTAGER, CLE DE SECURITE SENSIBLE !!!
 .env
 
+#fichier crée par le programme donc non essentiel
+data.json
+results.json
+
 #environnement virtuel
 .venv/
 
