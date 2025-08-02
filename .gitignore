@@ -1,18 +1,16 @@
-#variable d'environnement !!! NE SURTOUT PAS PARTAGER, CLE DE SECURITE SENSIBLE !!!
+#environment variables !!! DONT SHARE, API SECURITY KEY !!!
 .env
 
-#fichier crée par le programme donc non essentiel
-data.json
-results.json
+#create by the programm 
 Ebay Scraper.db
 
-#environnement virtuel
+#virtual environment
 .venv/
 
-#fichier txt de cheminement
+#step by step file
 step.txt
 
-#autres dossiers et fichiers
+#python-generated files
 __pycache__/
 .idea/
 
