@@ -1,4 +1,4 @@
-from analyze_func import analyze_data_from_the_call,get_access_token,make_a_call
+from analyze_func import analyze_data_from_the_call,get_access_token,make_a_call,version_buy_or_sell
 from product_class import constructor_product_instance
 import database
 
@@ -16,6 +16,11 @@ is_prod = True
 want_to_create_request = False
 want_to_read_request = False
 want_to_delete_request = False
+delete_all_prod = False
+
+if delete_all_prod:
+    database.delete_all()
+
 
 #if the user wants to create a request, get his inputs and stock into DB
 if want_to_create_request:
@@ -38,14 +43,24 @@ list_of_products = constructor_product_instance(data_from_requests)
 
 #get an automatically token to make the API call
 access_token = get_access_token(is_prod)
+
+all_the_text_to_send = ""
+#for each product from the users requests, make a call using the 'name' attribute in the object (instance of 'Product' class)
+# after analyze the results in a decorated function 'analyze_data_from_the_call' which take in decorated arg the 'option' attribute in the product object
+# and return based on your needs the min/max/median values (sell option) or just min value (buy option) converted in a string format
 for each_product in list_of_products:
 
     data_from_the_call = make_a_call(access_token,is_prod,each_product.name)
-    #en fonction de l'option 0 ou 1, créer 2 variante de la fonction analyze_data_from_the_call et rediriger vers celle ci
-    analyze_data_from_the_call(data_from_the_call)
-    
 
-#3 - créer une alerte par rapport a une requete prix envoyé associé a un nom produit, analyser resultat (moyenne,min,max) puis stocker
-#voir request,beautifulsoup et base SQL
+    decorate_analyze_data_from_the_call = version_buy_or_sell(each_product.option)(analyze_data_from_the_call)
+    part_of_text_to_send = decorate_analyze_data_from_the_call(data_from_the_call)
+    all_the_text_to_send += part_of_text_to_send + "\n"
+
+
+#- créer l envoi de mail avec protocole SMP
+
+# - créer une alerte par rapport a la requete prix envoyé associé a un nom produit puis envoyer mail special quand atteint
+#(si buy option inferieur ou egal au prix et si sell option superieur ou egal au prix)
+
 
 #4 - configurer variable d 'environnement

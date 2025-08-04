@@ -49,7 +49,7 @@ def make_a_call(access_token,production_env_enable,product_name):
 
 
     #get a response from the "search" API with the call headers (a JSON string)
-    response = requests.get(f"https://{endpoint}/buy/browse/v1/item_summary/search?q={product_name}&limit=15&offset=0&filter={encoded_filter}", headers = call_headers)
+    response = requests.get(f"https://{endpoint}/buy/browse/v1/item_summary/search?q={product_name}&limit=12&offset=0&filter={encoded_filter}", headers = call_headers)
 
     #handle if the call missed
     if response.status_code == 200:
@@ -63,12 +63,17 @@ def make_a_call(access_token,production_env_enable,product_name):
 
 
 def analyze_data_from_the_call(all_articles_from_the_call):
+    """The function will take all the articles from the call and search the median of products values and the min/max values of products,
+    and format him in string,
+    it take in argument all the 'itemSummaries' part in articles dict from the API call which contains each product characacteristics"""
+
     min_value = float("+inf")
     max_value = float("-inf")
     all_price_for_median = []
 
     for article in all_articles_from_the_call:
-        
+
+        #if the article has a FIXED PRICE and not AUCTIONS PRICE
         if "price" in article and not "currentBidPrice" in article:
             value_price = float(article['price'].get('value'))
             all_price_for_median.append(value_price)
@@ -84,7 +89,8 @@ def analyze_data_from_the_call(all_articles_from_the_call):
                 url_min = f"URL: {article['itemWebUrl']}"
                 fixed_price_min = f"Fixed Price: {article['price'].get('value')}"
                 auction_price_min = "Auction Price: Any"
-        
+
+        #if the article has not FIXED PRICE but an AUCTIONS PRICE
         elif not "price" in article and "currentBidPrice" in article:
             value_bid = float(article['currentBidPrice'].get('value'))
             all_price_for_median.append(value_bid)
@@ -101,6 +107,7 @@ def analyze_data_from_the_call(all_articles_from_the_call):
                 auction_price_min = f"Auction Price: {article['currentBidPrice'].get('value')}"
                 fixed_price_min  = "Fixed Price: Any"
         
+        #if the article has a FIXED PRICE and an AUCTIONS PRICE
         else:
             value_price = float(article['price'].get('value'))
             value_bid = float(article['currentBidPrice'].get('value'))
@@ -118,15 +125,37 @@ def analyze_data_from_the_call(all_articles_from_the_call):
                 fixed_price_min = f"Fixed Price: {article['price'].get('value')}"
                 auction_price_min = f"Auction Price: {article['currentBidPrice'].get('value')}"
 
-        
+        #format each min/max in string
+        product_min_value = f"{title_min}\n" + f"{fixed_price_min}" + f" {auction_price_min}" + f"\n{url_min}\n"
+        product_max_value = f"{title_max}\n" + f"{fixed_price_max}" + f" {auction_price_max}" + f"\n{url_max}\n"
+
+    #compute the median
+    median = f"Products Median: {sum(all_price_for_median)//len(all_price_for_median)}\n"
+    #print(sorted(all_price_for_median),median)
+    return median,product_min_value,product_max_value
 
 
-        product_description_min = f"\n{title_min}\n" + f"{fixed_price_min}" + f" {auction_price_min}" + f"\n{url_min}\n"
-        product_description_max = f"\n{title_max}\n" + f"{fixed_price_max}" + f" {auction_price_max}" + f"\n{url_max}\n"
-    print(product_description_min)
-    print(product_description_max)
+def version_buy_or_sell(buy_or_sell):
+    """Just a function to decorate 'analyze_data_from_the_call' based on the buy or sell options of each product and return only the data we need"""
+    def decorator_buy_or_sell(func):
+        def wrapper(iterable):
+            results = func(iterable)
+            median,min_value,max_value = results
+            text_for_the_mail = ""
+            if buy_or_sell == 0:
+                text_for_the_mail = f"TO_SELL:\n{min_value}\n{max_value}\n{median}"
+                return text_for_the_mail
+            elif buy_or_sell == 1:
+                text_for_the_mail = f"TO_BUY:\n{min_value}"
+                return text_for_the_mail
 
-    print(all_price_for_median,sum(all_price_for_median)//len(all_price_for_median))
+            return results         
+        return wrapper
+    return decorator_buy_or_sell
+
+
+
+
         
  
 

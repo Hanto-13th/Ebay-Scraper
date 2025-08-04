@@ -81,6 +81,16 @@ def extract_requests_from_db_table():
         extracted_data = extraction_cursor.fetchall()
         
         return extracted_data
+    
+def delete_all():
+    with sqlite3.connect("Ebay Scraper.db") as connection:
+        delete_cursor = connection.cursor()
+        try:
+            delete_cursor.execute("DELETE FROM user_requests")
+        except sqlite3.Error as err:
+            print(f"Database Error: {err}")
+
+
 
 
 
