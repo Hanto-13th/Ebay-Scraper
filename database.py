@@ -82,7 +82,7 @@ def extract_requests_from_db_table():
         
         return extracted_data
     
-def delete_all():
+def delete_all_requests_into_db_table():
     with sqlite3.connect("Ebay Scraper.db") as connection:
         delete_cursor = connection.cursor()
         try:
