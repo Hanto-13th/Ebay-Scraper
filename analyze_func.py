@@ -130,28 +130,40 @@ def analyze_data_from_the_call(all_articles_from_the_call):
         product_max_value = f"{title_max}\n" + f"{fixed_price_max}" + f" {auction_price_max}" + f"\n{url_max}\n"
 
     #compute the median
-    median = f"Products Median: {sum(all_price_for_median)//len(all_price_for_median)}\n"
+    product_median = f"Products Median: {sum(all_price_for_median)//len(all_price_for_median)}\n"
     #print(sorted(all_price_for_median),median)
-    return median,product_min_value,product_max_value
+    return product_median,product_min_value,product_max_value,all_price_for_median
 
 
-def version_buy_or_sell(buy_or_sell):
+def version_buy_or_sell(product_attributes):
     """Just a function to decorate 'analyze_data_from_the_call' based on the buy or sell options of each product and return only the data we need"""
     def decorator_buy_or_sell(func):
         def wrapper(iterable):
             results = func(iterable)
-            median,min_value,max_value = results
+            median_value,min_value,max_value,all_prices = results
             text_for_the_mail = ""
-            if buy_or_sell == 0:
-                text_for_the_mail = f"TO_SELL:\n{min_value}\n{max_value}\n{median}"
+            if product_attributes.option == 0:
+                median = sum(all_prices)//len(all_prices)
+                median_min_value = median * 0.85
+                median_max_value = median * 1.15
+                text_for_the_mail = f"TO_SELL:\n{min_value}\n{max_value}\n{median_value}"
+                if median_min_value <= product_attributes.price_to_reach >= median_max_value:
+                    product_attributes.days_in_a_row += 1
+                if product_attributes.days_in_a_row == 5:
+                    text_for_the_mail += "!!! ALERT: THE PRICE HAS REACHED THE AMOUNT YOU WANT = YOU CAN SELL IT !!!\n"
                 return text_for_the_mail
-            elif buy_or_sell == 1:
+            elif product_attributes.option == 1:
                 text_for_the_mail = f"TO_BUY:\n{min_value}"
+                if product_attributes.price_to_reach <= min(all_prices):
+                    text_for_the_mail += "!!! ALERT: THE PRICE HAS REACHED THE AMOUNT YOU WANT = YOU CAN BUY IT !!!\n"
                 return text_for_the_mail
-
             return results         
         return wrapper
     return decorator_buy_or_sell
+
+
+
+
 
 
 

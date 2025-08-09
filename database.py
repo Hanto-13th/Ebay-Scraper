@@ -3,7 +3,7 @@ import sqlite3
 def create_database():
     """Function to create database sqlite to stock user requests,
     a request build model is: 
-    {"id"(handle automatically, used to identify request in DB),"product name","price to reach","option("SELL: 0 or "BUY: 1")","contact mail"}"""
+    {"id"(handle automatically, used to identify request in DB),"product name","price to reach","option("SELL: 0 or "BUY: 1")","days_in_a_row (to see the days in a row the price is reached)"}"""
 
     #open the DB and create table to stock user requests using the cursor
     with sqlite3.connect("Ebay Scraper.db") as connection:
@@ -11,7 +11,7 @@ def create_database():
         "product TEXT NOT NULL," \
         "price INTEGER NOT NULL," \
         "option INTEGER NOT NULL," \
-        "contact TEXT NOT NULL)"
+        "days_in_a_row INTEGER NOT NULL)"
 
         creation_cursor = connection.cursor()
         creation_cursor.execute(table)
@@ -25,7 +25,6 @@ def get_user_inputs():
     product_to_search = (input("Insert the object to search: ")).lower()
     price_to_reach = input("Insert the price to reach: ")
     option_buy_or_sell = input("Choose your options for this request (SELL: 0 or BUY: 1): ")
-    user_mail_contact = (input("Enter your mail to recieve the results: ")).lower()
 
     #test if infos are formated allows
     try:
@@ -38,17 +37,17 @@ def get_user_inputs():
         print("Error: the value is not allowed, Only use '0' for SELL option or '1' for BUY option")
         exit(1)
         
-    return product_to_search,float(price_to_reach),int(option_buy_or_sell),user_mail_contact
+    return product_to_search,float(price_to_reach),int(option_buy_or_sell)
 
-def create_requests_into_db(product,price,option,contact):
+def create_requests_into_db(product,price,option):
         """Function to stock in DB the requests with user inputs, 
-        take in arguments the name of product, the price to reach, the buy or sell option and the user mail contact."""
+        take in arguments the name of product, the price to reach, the buy or sell option"""
 
         #open the DB and stock user requests using the cursor
         with sqlite3.connect("Ebay Scraper.db") as connection:
             insertion_cursor = connection.cursor()
-            insertion_cursor.execute("INSERT INTO user_requests (product, price, option, contact) VALUES (?, ?, ?, ?)",
-                                     (product, price, option, contact))
+            insertion_cursor.execute("INSERT INTO user_requests (product, price, option, days_in_a_row) VALUES (?, ?, ?, ?)",
+                                     (product, price, option, 0))
             connection.commit()
 
 def read_requests_into_db_table():
@@ -59,7 +58,7 @@ def read_requests_into_db_table():
         read_cursor.execute("SELECT * FROM user_requests")
         rows = read_cursor.fetchall()
         for row in rows:
-            print(row)
+            print(f"Request ID: {row[0]}, Product: {row[1]}, Price to reach: {row[2]} euros, Buy or Sell Options: {"SELL" if row[3] == 0 else "BUY"}")
 
 def delete_requests_into_db_table():
     """Function to delete a row using his ID into the table."""
@@ -68,7 +67,7 @@ def delete_requests_into_db_table():
         id_to_delete = input("Choose a ID request to delete: ")
         delete_cursor = connection.cursor()
         try:
-            delete_cursor.execute("DELETE FROM user_requests WHERE id = (?)",(id_to_delete))
+            delete_cursor.execute("DELETE FROM user_requests WHERE id = (?)",(id_to_delete,))
         except sqlite3.Error as err:
             print(f"Database Error: {err}")
 

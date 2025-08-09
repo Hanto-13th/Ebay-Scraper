@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from analyze_func import analyze_data_from_the_call,get_access_token,make_a_call,version_buy_or_sell
 from product_class import constructor_product_instance
-from discord_webhook import send_the_log
+from discord_webhook import send_the_data,truncate_the_longest_msg,render_message
 import database
 
 
@@ -10,9 +10,10 @@ is_prod = True
 
 #boolean to handle the read,deletion or creation requests
 want_to_create_request = False
-want_to_read_request = False
+want_to_read_request = True
 want_to_delete_request = False
 want_to_delete_all_requests = False
+want_to_send_message = False
 
 def main():
 
@@ -24,8 +25,8 @@ def main():
 
     #if the user wants to create a request, get his inputs and stock into DB
     if want_to_create_request:
-        product_name,price_to_reach,buy_or_sell,user_mail_contact = database.get_user_inputs()
-        database.create_requests_into_db(product_name,price_to_reach,buy_or_sell,user_mail_contact)
+        product_name,price_to_reach,buy_or_sell = database.get_user_inputs()
+        database.create_requests_into_db(product_name,price_to_reach,buy_or_sell)
 
     #if the user wants to read the requests which exists in the DB
     if want_to_read_request:
@@ -48,23 +49,30 @@ def main():
     #get an automatically token to make the API call
     access_token = get_access_token(is_prod)
 
-    all_the_text_to_send = ""
-    #for each product from the users requests, make a call using the 'name' attribute in the object (instance of 'Product' class)
-    # after analyze the results in a decorated function 'analyze_data_from_the_call' which take in decorated arg the 'option' attribute in the product object
-    # and return based on your needs the min/max/median values (sell option) or just min value (buy option) converted in a string format
-    for each_product in list_of_products:
+    if want_to_send_message:
+        all_the_text = ""
+        #for each product from the users requests, make a call using the 'name' attribute in the object (instance of 'Product' class)
+        # after analyze the results in a decorated function 'analyze_data_from_the_call' which take in decorated arg the 'option' attribute in the product object
+        # and return based on your needs the min/max/median values (sell option) or just min value (buy option) converted in a string format
+        for each_product in list_of_products:
 
-        data_from_the_call = make_a_call(access_token,is_prod,each_product.name)
+            data_from_the_call = make_a_call(access_token,is_prod,each_product.name)
 
-        decorate_analyze_data_from_the_call = version_buy_or_sell(each_product.option)(analyze_data_from_the_call)
-        try:
-            part_of_text_to_send = decorate_analyze_data_from_the_call(data_from_the_call)
-        except Exception as exc:
-            print(f"Error: problem during data analyze, move on to the next article ({exc})")
-        all_the_text_to_send += part_of_text_to_send + "\n"
-    
-    #send the complete analyzed data from user requests 
-    send_the_log(all_the_text_to_send)
+            decorate_analyze_data_from_the_call = version_buy_or_sell(each_product)(analyze_data_from_the_call)
+            try:
+                part_of_text = decorate_analyze_data_from_the_call(data_from_the_call)
+            except Exception as exc:
+                print(f"Error: problem during data analyze, move on to the next article ({exc})")
+                continue
+            
+            all_the_text += part_of_text+ "\n"
+        
+        all_the_text_rendered = render_message(all_the_text)
+        #truncate the message each 2000 chars and return the message slice in a list
+        message = truncate_the_longest_msg(all_the_text_rendered)
+        
+        #send the complete analyzed data from user requests (truncated if need)
+        send_the_data(message)
 
     
 
