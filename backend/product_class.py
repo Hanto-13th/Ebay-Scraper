@@ -9,7 +9,7 @@ class Product():
 def constructor_product_instance(data_from_requests):
     list_of_instances = []
     for product in data_from_requests:
-        new_instance = Product(product[1],product[2],product[3],0)
+        new_instance = Product(product[1],product[2],product[3],product[4])
         list_of_instances.append(new_instance)
 
     return list_of_instances

@@ -58,7 +58,7 @@ def read_requests_into_db_table():
         read_cursor.execute("SELECT * FROM user_requests")
         rows = read_cursor.fetchall()
         for row in rows:
-            print(f"Request ID: {row[0]}, Product: {row[1]}, Price to reach: {row[2]} euros, Buy or Sell Options: {"SELL" if row[3] == 0 else "BUY"}")
+            print(f"Request ID: {row[0]}, Product: {row[1]}, Price to reach: {row[2]} euros, Buy or Sell Options: {"SELL" if row[3] == 0 else "BUY"}\n")
 
 def delete_requests_into_db_table():
     """Function to delete a row using his ID into the table."""
@@ -88,6 +88,15 @@ def delete_all_requests_into_db_table():
             delete_cursor.execute("DELETE FROM user_requests")
         except sqlite3.Error as err:
             print(f"Database Error: {err}")
+
+def update_product_attributes_into_db_table(attributes_product):
+    with sqlite3.connect("Ebay Scraper.db") as connection:
+        update_cursor = connection.cursor()
+        try:
+            update_cursor.execute("UPDATE user_requests SET days_in_a_row = (?) WHERE product = (?)",(attributes_product.days_in_a_row,attributes_product.name))
+        except sqlite3.Error as err:
+            print(f"Database Error: {err}")
+
 
 
 
