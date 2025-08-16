@@ -2,7 +2,7 @@ from . import database
 
 #boolean to handle the read,deletion or creation requests
 want_to_create_request = False
-want_to_read_request = False
+want_to_read_request = True
 want_to_delete_request = False
 want_to_delete_all_requests = False
 
@@ -18,7 +18,10 @@ def main():
 
     #if the user wants to read the requests which exists in the DB
     if want_to_read_request:
-        database.read_requests_into_db_table()
+        requests_lst = database.read_requests_into_db_table()
+        print(requests_lst)
+        for request in requests_lst:
+            print(request)
 
     #if the user wants to delete a request which exists in the DB
     if want_to_delete_request:

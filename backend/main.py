@@ -1,5 +1,4 @@
-from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask,request
 import db.database as database
 from backend.product_class import constructor_product_instance
 from . import analyze_func 
@@ -7,15 +6,38 @@ from . import discord_webhook
 from . import ebay_call
 
 
+app = Flask(__name__)
+
+@app.route('/create_database',methods = ['POST'])
+def creation_database():
+    database.create_database()
+    return "Database Created"
 
 
-def run_full_ebay_process():
+@app.route('/create_requests_into_db',methods = ['POST'])
+def creation_requests():
+    product_name,price_to_reach,buy_or_sell = request.get_json()
+    database.create_requests_into_db(product_name,price_to_reach,buy_or_sell)
+    return "Requests Created"
 
-    #switch between sandbox or production environment
-    is_prod = True
+@app.route('/read_requests_into_db_table',methods = ['GET'])
+def read_requests():
+    requests_list = database.read_requests_into_db_table()
+    return requests_list
 
-    #to load all data from .env
-    load_dotenv()
+@app.route('/delete_requests_into_db_table',methods = ['POST'])
+def deletion_requests():
+    database.read_requests_into_db_table()
+    database.delete_requests_into_db_table()
+    return "Requests Deleted"
+
+@app.route('/delete_all_requests_into_db_table',methods = ['POST'])
+def deletion_all_requests():
+    database.delete_all_requests_into_db_table()
+    return "All Requests Deleted"
+
+@app.route('/run_full_ebay_process',methods = ['POST'])
+def run_full_ebay_process(is_prod = True):
 
     #get an automatically token to make the API call
     access_token = ebay_call.get_access_token(is_prod)
@@ -51,6 +73,8 @@ def run_full_ebay_process():
     #send the complete analyzed data from user requests (truncated if need)
     discord_webhook.send_the_data(message)
 
+    return "Process completed successfully"
+
 
 if __name__ == "__main__":
-    run_full_ebay_process()
+    app.run()

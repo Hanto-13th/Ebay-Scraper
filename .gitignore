@@ -9,6 +9,7 @@ Ebay Scraper.db
 
 #step by step file
 step.txt
+gui/test.txt
 
 #python-generated files
 __pycache__/
