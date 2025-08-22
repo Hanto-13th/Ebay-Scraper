@@ -20,13 +20,14 @@ def main():
     if want_to_read_request:
         requests_lst = database.read_requests_into_db_table()
         print(requests_lst)
-        for request in requests_lst:
-            print(request)
+
 
     #if the user wants to delete a request which exists in the DB
     if want_to_delete_request:
-        database.read_requests_into_db_table()
-        database.delete_requests_into_db_table()
+        requests_lst = database.read_requests_into_db_table()
+        print(requests_lst)
+        id = input("choose an id: ")
+        database.delete_requests_into_db_table(id)
     
     #if the user wants to delete all requests in DB
     if want_to_delete_all_requests:

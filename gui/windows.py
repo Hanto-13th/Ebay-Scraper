@@ -150,30 +150,34 @@ class Creation_Window(QMainWindow):
         product_name = (self.product_line.text()).lower()
         price_to_reach = self.price_line.text()
         option_buy_or_sell = self.option_line.text()
-        json = []
+        data = {}
 
         if len(product_name) == 0:
             self.alert_label.setText("Error: set a valid product name !")
             self.alert_label.show()
         else:
-            json.append(product_name)
+            data["product_name"] = product_name
         try:
             price_to_reach = float(price_to_reach)
         except ValueError:
             self.alert_label.setText("Error: the value is not allowed, Only use integers or floating point numbers !")
             self.alert_label.show()
         else:
-            json.append(float(price_to_reach))
+            data["price"] = float(price_to_reach)
         if option_buy_or_sell not in ("0", "1"):
             self.alert_label.setText("Error: the value is not allowed, Only use '0' for SELL option or '1' for BUY option !")
             self.alert_label.show()
         else:
-            json.append(int(option_buy_or_sell))
-        if len(json) == 3:
+            data["option"] = int(option_buy_or_sell)
+        if len(data) == 3:
             self.alert_label.hide()
-            response = requests.post("http://127.0.0.1:5000/create_requests_into_db",json=json)
+            response = requests.post("http://127.0.0.1:5000/create_requests_into_db",json=data)
+            message = response.json()
             if response.status_code != 200:
                 self.alert_label.setText(f"The Requests Creation Has Failed ! : {response.status_code} error")
+                self.alert_label.show()
+            elif message["success"] == False:
+                self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
                 self.alert_label.show()
             else:
                 self.alert_label.setText("Request Created !")
@@ -182,9 +186,6 @@ class Creation_Window(QMainWindow):
                 self.timer.timeout.connect(self.alert_label.hide)
                 self.timer.start(500)
                 
-
-
-    
     def back_window(self):
         self.main_window = MainWindow()
         self.main_window.show()
@@ -213,11 +214,16 @@ class Read_Window(QMainWindow):
 
 
         response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table")
+        message = response.json()
         if response.status_code != 200:
             self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+        elif message["success"] == False:
+                self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                self.display_requests.show()
         else:
             self.display_requests.setStyleSheet("border :3px solid blue")
-            self.display_requests.setText(response.text)
+            self.display_requests.setText(message["results"])
+
 
     def back_window(self):
         self.main_window = MainWindow()
@@ -236,29 +242,111 @@ class Deletion_Window(QMainWindow):
 
         widget = QWidget()
         self.setCentralWidget(widget)
+        main_layout = QVBoxLayout()
+        form = QFormLayout()
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignHCenter)  
+        form.setFormAlignment(Qt.AlignmentFlag.AlignHCenter)  
+        form.setHorizontalSpacing(0)
+        form.setVerticalSpacing(0)  
+        form.setContentsMargins(20, 0, 20, 5)
+     
+        self.button_back_window = QPushButton("Back",widget)
+        self.button_back_window.setGeometry(10,20,80, 25)
+        self.button_back_window.setFlat(True)
+        self.button_back_window.clicked.connect(self.back_window)
 
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(0)
+        self.button_deletion = QPushButton("Delete the request")
+        self.button_deletion.setFixedSize(120,25)
+        self.button_deletion.setFlat(True)
+        self.button_deletion.clicked.connect(self.delete_the_request)
 
-        layout.addStretch()
+        self.display_requests = QLabel(widget)
+        self.display_requests.setGeometry(100,50,500,500)
+
+        self.delete_line = QLineEdit()
+        self.delete_line.setFixedSize(50,20)
+        form.addRow("Choose the Request ID to delete:", self.delete_line)
+
+        self.alert_label = QLabel(widget)
+        self.alert_label.setGeometry(0,0,200,40)
+        self.alert_label.hide()
+
         
 
-
-        button = QPushButton("Create a Request")
-
-        
-        button.setFixedSize(220, 40)
-        button.setFlat(True)
-        button.clicked.connect(self.the_button_was_clicked)
-        layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        layout.addStretch()
-
-        widget.setLayout(layout)
+        main_layout.addStretch()
 
 
-    def the_button_was_clicked(self):
-        print("Clicked!")
+        main_layout.addWidget(self.display_requests, alignment=Qt.AlignmentFlag.AlignCenter)
+        main_layout.addLayout(form)
+        main_layout.addWidget(self.button_deletion, alignment=Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.alert_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        main_layout.setSpacing(15)
+
+        main_layout.addStretch()
+
+        widget.setLayout(main_layout)
+
+
+
+        response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table")
+        message = response.json()
+        if response.status_code != 200:
+            self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+        elif message["success"] == False:
+                self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                self.display_requests.show()
+        else:
+            self.display_requests.setStyleSheet("border :3px solid blue")
+            self.display_requests.setText(message["results"])
+
+    
+    def delete_the_request(self):
+        id_to_delete = self.delete_line.text()
+        data = {}
+
+        if len(id_to_delete) == 0:
+            self.alert_label.setText("Error: set a valid product name !")
+            self.alert_label.show()
+        else:
+            try:
+                id_to_delete = int(id_to_delete)
+            except ValueError:
+                self.alert_label.setText("Error: the value is not allowed, Only use valid ID number !")
+                self.alert_label.show()
+            else:
+                data["id"] = int(id_to_delete)
+                self.alert_label.hide()
+                response = requests.post("http://127.0.0.1:5000/delete_requests_into_db_table",json=data)
+                message = response.json()
+                if response.status_code != 200:
+                    self.alert_label.setText(f"The Requests Deletion Has Failed ! : {response.status_code} error")
+                    self.alert_label.show()
+                elif message["success"] == False:
+                    self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                    self.alert_label.show()
+                else:
+                    self.alert_label.setText("Request Deleted !")
+                    self.alert_label.show()
+                    self.timer = QTimer()
+                    self.timer.timeout.connect(self.alert_label.hide)
+                    self.timer.start(500)
+                    response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table")
+                    message = response.json()
+                    if response.status_code != 200:
+                        self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+                    elif message["success"] == False:
+                        self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                        self.display_requests.show()
+                    else:
+                        self.display_requests.setStyleSheet("border :3px solid blue")
+                        self.display_requests.setText(message["results"])
+
+                            
+    def back_window(self):
+        self.main_window = MainWindow()
+        self.main_window.show()
+        self.close()
 
 class All_Deletion_Window(QMainWindow):
     def __init__(self):
@@ -276,7 +364,6 @@ class All_Deletion_Window(QMainWindow):
         self.alert_label = QLabel(widget)
         self.alert_label.setGeometry(70,0,300,85)
         self.alert_label.setText("Are you sure you want to delete all the requests?")
-        #self.alert_label.setStyleSheet("border :3px solid blue")
 
         self.button_back_window = QPushButton("Yes",widget)
         self.button_back_window.setGeometry(110,85,50, 30)
@@ -297,8 +384,12 @@ class All_Deletion_Window(QMainWindow):
     def all_deletion(self):
 
         response = requests.post("http://127.0.0.1:5000/delete_all_requests_into_db_table")
+        message = response.json()
         if response.status_code != 200:
             self.alert_label.setText(f"The Requests Deletion Has Failed ! : {response.status_code} error")
+        elif message["success"] == False:
+            self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+            self.alert_label.show()
         else:
             self.alert_label.setText("All Requests Has Been Deleted !")
             self.timer = QTimer()
@@ -320,7 +411,7 @@ class Send_Data_Window(QMainWindow):
         self.setCentralWidget(widget)
 
         self.alert_label = QLabel(widget)
-        self.alert_label.setGeometry(70,0,300,85)
+        self.alert_label.setGeometry(70,0,380,85)
         self.alert_label.setText("Do you want to recieve the data on your Discord ?")
         #self.alert_label.setStyleSheet("border :3px solid blue")
 
@@ -343,10 +434,22 @@ class Send_Data_Window(QMainWindow):
     def send_data(self):
 
         response = requests.post("http://127.0.0.1:5000/run_full_ebay_process")
+        message = response.json()
         if response.status_code != 200:
             self.alert_label.setText(f"Sending Data Failed : {response.status_code} error")
+            self.alert_label.show()
+        elif "success" in message and message["success"] == False:
+            self.alert_label.setText(f"Sending Data Failed : {message["message"]}")
+            self.alert_label.show()
+        elif "error" in message:
+            self.alert_label.setText(f"Sending Data Failed : {message["error_description"]}")
+            self.alert_label.show()
+        elif "errors" in message:
+            errors_details = message["errors"][0]
+            self.alert_label.setText(f"Sending Data Failed : {errors_details["longMessage"]}")
+            self.alert_label.show()
         else:
-            self.alert_label.setText("The Data Has Been Send !")
+            self.alert_label.setText(f"The Data Has Been Send with {message["untreated_data"]} Untreated Data !")
             self.timer = QTimer()
             self.timer.timeout.connect(self.close)
             self.timer.start(1500)

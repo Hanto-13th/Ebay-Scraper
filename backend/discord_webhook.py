@@ -25,15 +25,16 @@ def send_the_data(message_to_send):
         response = requests.post(webhook_url, json=data)
 
         #check if success
-        if response.status_code == 204:
-            print('Message sent successfully!')
-        else:
-            print(f'Failed to send message: {response.status_code}')
-            print(response.text)
+        if response.status_code != 204:
+            error_message = response.json()
+            return error_message
+
+    return {"success": True, "message": "Message sent successfully!"}
+
+       
 
 def render_message(all_the_message):
     """Just function to render message for more lisibility"""
-
     CHAR_NUMBER = 50
     return f"NEW LOG:\n\n{all_the_message}" + CHAR_NUMBER * "#"
 

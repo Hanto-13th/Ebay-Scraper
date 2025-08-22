@@ -1,5 +1,30 @@
 import sqlite3
 
+def decorate_for_handling_errors(func):
+    def wrapper_func(*args, **kwargs):
+
+        try: 
+            results = func(*args, **kwargs)
+        except sqlite3.IntegrityError as e:
+            return {"success": False, "message": f"Integrity error: {str(e)}"}
+        except sqlite3.OperationalError as e:
+            return {"success": False, "message": f"Operational error: {str(e)}"}
+        except sqlite3.DatabaseError as e:
+            return {"success": False, "message": f"Database error: {str(e)}"}
+        except sqlite3.Error as e:
+            return {"success": False, "message": f"SQLite error: {str(e)}"}
+        except Exception as e:
+            return {"success": False, "message": f"Unexpected error: {str(e)}"}
+        else:
+            response = {"success": True, "message": "Task executed with success"}
+            if results is not None:  
+                response["results"] = results
+            return response
+        
+    return wrapper_func
+
+
+@decorate_for_handling_errors
 def create_database():
     """Function to create database sqlite to stock user requests,
     a request build model is: 
@@ -17,6 +42,7 @@ def create_database():
         creation_cursor.execute(table)
         connection.commit()
 
+@decorate_for_handling_errors
 def create_requests_into_db(product,price,option):
         """Function to stock in DB the requests with user inputs, 
         take in arguments the name of product, the price to reach, the buy or sell option"""
@@ -28,9 +54,10 @@ def create_requests_into_db(product,price,option):
                                      (product, price, option, 0))
             connection.commit()
 
+@decorate_for_handling_errors
 def read_requests_into_db_table():
     """Function to read the table in DB."""
-
+    
     with sqlite3.connect("Ebay Scraper.db") as connection:
         requests_lst = ""
         read_cursor = connection.cursor()
@@ -40,17 +67,23 @@ def read_requests_into_db_table():
             requests_lst += f"Request ID: {row[0]}, Product: {row[1]}, Price to reach: {row[2]} euros, Buy or Sell Options: {"SELL" if row[3] == 0 else "BUY"}\n" 
         return requests_lst
 
-def delete_requests_into_db_table():
+@decorate_for_handling_errors
+def delete_requests_into_db_table(id_to_delete):
     """Function to delete a row using his ID into the table."""
 
     with sqlite3.connect("Ebay Scraper.db") as connection:
-        id_to_delete = input("Choose a ID request to delete: ")
         delete_cursor = connection.cursor()
-        try:
-            delete_cursor.execute("DELETE FROM user_requests WHERE id = (?)",(id_to_delete,))
-        except sqlite3.Error as err:
-            print(f"Database Error: {err}")
+        delete_cursor.execute("DELETE FROM user_requests WHERE id = (?)",(id_to_delete,))
 
+
+@decorate_for_handling_errors
+def delete_all_requests_into_db_table():
+    with sqlite3.connect("Ebay Scraper.db") as connection:
+        delete_cursor = connection.cursor()
+        delete_cursor.execute("DELETE FROM user_requests")
+
+
+@decorate_for_handling_errors
 def extract_requests_from_db_table():
     """Function to extract the data table from DB."""
 
@@ -60,22 +93,16 @@ def extract_requests_from_db_table():
         extracted_data = extraction_cursor.fetchall()
         
         return extracted_data
-    
-def delete_all_requests_into_db_table():
-    with sqlite3.connect("Ebay Scraper.db") as connection:
-        delete_cursor = connection.cursor()
-        try:
-            delete_cursor.execute("DELETE FROM user_requests")
-        except sqlite3.Error as err:
-            print(f"Database Error: {err}")
 
+@decorate_for_handling_errors
 def update_product_attributes_into_db_table(attributes_product):
     with sqlite3.connect("Ebay Scraper.db") as connection:
         update_cursor = connection.cursor()
-        try:
-            update_cursor.execute("UPDATE user_requests SET days_in_a_row = (?) WHERE product = (?)",(attributes_product.days_in_a_row,attributes_product.name))
-        except sqlite3.Error as err:
-            print(f"Database Error: {err}")
+        update_cursor.execute("UPDATE user_requests SET days_in_a_row = (?) WHERE product = (?)",(attributes_product.days_in_a_row,attributes_product.name))
+
+
+
+
 
 
 
