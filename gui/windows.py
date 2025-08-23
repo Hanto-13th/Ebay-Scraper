@@ -155,6 +155,9 @@ class Creation_Window(QMainWindow):
         if len(product_name) == 0:
             self.alert_label.setText("Error: set a valid product name !")
             self.alert_label.show()
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.alert_label.hide)
+            self.timer.start(1500)
         else:
             data["product_name"] = product_name
         try:
@@ -162,29 +165,49 @@ class Creation_Window(QMainWindow):
         except ValueError:
             self.alert_label.setText("Error: the value is not allowed, Only use integers or floating point numbers !")
             self.alert_label.show()
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.alert_label.hide)
+            self.timer.start(1500)
         else:
             data["price"] = float(price_to_reach)
         if option_buy_or_sell not in ("0", "1"):
             self.alert_label.setText("Error: the value is not allowed, Only use '0' for SELL option or '1' for BUY option !")
             self.alert_label.show()
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.alert_label.hide)
+            self.timer.start(1500)
         else:
             data["option"] = int(option_buy_or_sell)
         if len(data) == 3:
             self.alert_label.hide()
-            response = requests.post("http://127.0.0.1:5000/create_requests_into_db",json=data)
-            message = response.json()
-            if response.status_code != 200:
-                self.alert_label.setText(f"The Requests Creation Has Failed ! : {response.status_code} error")
-                self.alert_label.show()
-            elif message["success"] == False:
-                self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
-                self.alert_label.show()
-            else:
-                self.alert_label.setText("Request Created !")
+            try:
+                response = requests.post("http://127.0.0.1:5000/create_requests_into_db",json=data,timeout=5)
+            except requests.exceptions.ConnectionError:
+                self.alert_label.setText(f"Impossible to contact the server, verify the Flask connection")
                 self.alert_label.show()
                 self.timer = QTimer()
                 self.timer.timeout.connect(self.alert_label.hide)
-                self.timer.start(500)
+                self.timer.start(1500)
+            except requests.exceptions.ConnectTimeout:
+                self.alert_label.setText(f"The Flask server is taking too long to respond")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+            else:
+                message = response.json()
+                if response.status_code != 200:
+                    self.alert_label.setText(f"The Requests Creation Has Failed ! : {response.status_code} error")
+                    self.alert_label.show()
+                elif message["success"] == False:
+                    self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                    self.alert_label.show()
+                else:
+                    self.alert_label.setText("Request Created !")
+                    self.alert_label.show()
+                    self.timer = QTimer()
+                    self.timer.timeout.connect(self.alert_label.hide)
+                    self.timer.start(500)
                 
     def back_window(self):
         self.main_window = MainWindow()
@@ -212,17 +235,25 @@ class Read_Window(QMainWindow):
         self.display_requests = QLabel(widget)
         self.display_requests.setGeometry(100,50,500,500)
 
-
-        response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table")
-        message = response.json()
-        if response.status_code != 200:
-            self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
-        elif message["success"] == False:
+        try:
+            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=5)
+        except requests.exceptions.ConnectionError:
+            self.display_requests.setText(f"Impossible to contact the server, verify the Flask connection")
+            self.display_requests.show()
+        except requests.exceptions.ConnectTimeout:
+            self.display_requests.setText(f"The Flask server is taking too long to respond")
+            self.display_requests.show()
+        else:
+            message = response.json()
+            if response.status_code != 200:
+                self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+                self.display_requests.show()
+            elif message["success"] == False:
                 self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
                 self.display_requests.show()
-        else:
-            self.display_requests.setStyleSheet("border :3px solid blue")
-            self.display_requests.setText(message["results"])
+            else:
+                self.display_requests.setStyleSheet("border :3px solid blue")
+                self.display_requests.setText(message["results"])
 
 
     def back_window(self):
@@ -271,10 +302,7 @@ class Deletion_Window(QMainWindow):
         self.alert_label.setGeometry(0,0,200,40)
         self.alert_label.hide()
 
-        
-
         main_layout.addStretch()
-
 
         main_layout.addWidget(self.display_requests, alignment=Qt.AlignmentFlag.AlignCenter)
         main_layout.addLayout(form)
@@ -282,23 +310,30 @@ class Deletion_Window(QMainWindow):
         main_layout.addWidget(self.alert_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         main_layout.setSpacing(15)
-
         main_layout.addStretch()
 
         widget.setLayout(main_layout)
 
 
-
-        response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table")
-        message = response.json()
-        if response.status_code != 200:
-            self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
-        elif message["success"] == False:
+        try:
+            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=5)
+        except requests.exceptions.ConnectionError:
+            self.display_requests.setText(f"Impossible to contact the server, verify the Flask connection")
+            self.display_requests.show()
+        except requests.exceptions.ConnectTimeout:
+            self.display_requests.setText(f"The Flask server is taking too long to respond")
+            self.display_requests.show()
+        else:
+            message = response.json()
+            if response.status_code != 200:
+                self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+                self.display_requests.show()
+            elif message["success"] == False:
                 self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
                 self.display_requests.show()
-        else:
-            self.display_requests.setStyleSheet("border :3px solid blue")
-            self.display_requests.setText(message["results"])
+            else:
+                self.display_requests.setStyleSheet("border :3px solid blue")
+                self.display_requests.setText(message["results"])
 
     
     def delete_the_request(self):
@@ -317,30 +352,52 @@ class Deletion_Window(QMainWindow):
             else:
                 data["id"] = int(id_to_delete)
                 self.alert_label.hide()
-                response = requests.post("http://127.0.0.1:5000/delete_requests_into_db_table",json=data)
-                message = response.json()
-                if response.status_code != 200:
-                    self.alert_label.setText(f"The Requests Deletion Has Failed ! : {response.status_code} error")
-                    self.alert_label.show()
-                elif message["success"] == False:
-                    self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
-                    self.alert_label.show()
-                else:
-                    self.alert_label.setText("Request Deleted !")
+                try:
+                    response = requests.post("http://127.0.0.1:5000/delete_requests_into_db_table",json=data,timeout=5)
+                except requests.exceptions.ConnectionError:
+                    self.alert_label.setText(f"Impossible to contact the server, verify the Flask connection")
                     self.alert_label.show()
                     self.timer = QTimer()
                     self.timer.timeout.connect(self.alert_label.hide)
-                    self.timer.start(500)
-                    response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table")
+                    self.timer.start(1500)
+                except requests.exceptions.ConnectTimeout:
+                    self.alert_label.setText(f"The Flask server is taking too long to respond")
+                    self.alert_label.show()
+                    self.timer = QTimer()
+                    self.timer.timeout.connect(self.alert_label.hide)
+                    self.timer.start(1500)
+                else:
                     message = response.json()
                     if response.status_code != 200:
-                        self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+                        self.alert_label.setText(f"The Requests Deletion Has Failed ! : {response.status_code} error")
+                        self.alert_label.show()
                     elif message["success"] == False:
-                        self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
-                        self.display_requests.show()
+                        self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                        self.alert_label.show()
                     else:
-                        self.display_requests.setStyleSheet("border :3px solid blue")
-                        self.display_requests.setText(message["results"])
+                        self.alert_label.setText("Request Deleted !")
+                        self.alert_label.show()
+                        self.timer = QTimer()
+                        self.timer.timeout.connect(self.alert_label.hide)
+                        self.timer.start(500)
+                        try:
+                            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=5)
+                        except requests.exceptions.ConnectionError:
+                            self.display_requests.setText(f"Impossible to contact the server, verify the Flask connection")
+                            self.display_requests.show()
+                        except requests.exceptions.ConnectTimeout:
+                            self.display_requests.setText(f"The Flask server is taking too long to respond")
+                            self.display_requests.show()
+                        else:
+                            message = response.json()
+                            if response.status_code != 200:
+                                self.display_requests.setText(f"Impossible To Read The Data ! : {response.status_code} error")
+                            elif message["success"] == False:
+                                self.display_requests.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+                                self.display_requests.show()
+                            else:
+                                self.display_requests.setStyleSheet("border :3px solid blue")
+                                self.display_requests.setText(message["results"])
 
                             
     def back_window(self):
@@ -362,7 +419,7 @@ class All_Deletion_Window(QMainWindow):
         self.setCentralWidget(widget)
 
         self.alert_label = QLabel(widget)
-        self.alert_label.setGeometry(70,0,300,85)
+        self.alert_label.setGeometry(70,0,380,85)
         self.alert_label.setText("Are you sure you want to delete all the requests?")
 
         self.button_back_window = QPushButton("Yes",widget)
@@ -382,19 +439,40 @@ class All_Deletion_Window(QMainWindow):
         self.close()
     
     def all_deletion(self):
-
-        response = requests.post("http://127.0.0.1:5000/delete_all_requests_into_db_table")
-        message = response.json()
-        if response.status_code != 200:
-            self.alert_label.setText(f"The Requests Deletion Has Failed ! : {response.status_code} error")
-        elif message["success"] == False:
-            self.alert_label.setText(f"The Requests Creation Has Failed ! : {message["message"]}")
+        try:
+            response = requests.post("http://127.0.0.1:5000/delete_all_requests_into_db_table",timeout=5)
+        except requests.exceptions.ConnectionError:
+            self.alert_label.setText(f"Impossible to contact the server, verify the Flask connection")
             self.alert_label.show()
-        else:
-            self.alert_label.setText("All Requests Has Been Deleted !")
             self.timer = QTimer()
-            self.timer.timeout.connect(self.close)
+            self.timer.timeout.connect(self.alert_label.hide)
             self.timer.start(1500)
+        except requests.exceptions.ConnectTimeout:
+            self.alert_label.setText(f"The Flask server is taking too long to respond")
+            self.alert_label.show()
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.alert_label.hide)
+            self.timer.start(1500)
+        else:
+            message = response.json()
+            if response.status_code != 200:
+                self.alert_label.setText(f"The Requests Deletion Has Failed ! : {response.status_code} error")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+
+            elif message["success"] == False:
+                self.alert_label.setText(f"The Requests Deletion Has Failed ! : {message["message"]}")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+            else:
+                self.alert_label.setText("All Requests Has Been Deleted !")
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.close)
+                self.timer.start(1500)
 
 
 class Send_Data_Window(QMainWindow):
@@ -433,24 +511,50 @@ class Send_Data_Window(QMainWindow):
     
     def send_data(self):
 
-        response = requests.post("http://127.0.0.1:5000/run_full_ebay_process")
-        message = response.json()
-        if response.status_code != 200:
-            self.alert_label.setText(f"Sending Data Failed : {response.status_code} error")
+        try:
+            response = requests.post("http://127.0.0.1:5000/run_full_ebay_process",timeout=5)
+        except requests.exceptions.ConnectionError:
+            self.alert_label.setText(f"Impossible to contact the server, verify the Flask connection")
             self.alert_label.show()
-        elif "success" in message and message["success"] == False:
-            self.alert_label.setText(f"Sending Data Failed : {message["message"]}")
-            self.alert_label.show()
-        elif "error" in message:
-            self.alert_label.setText(f"Sending Data Failed : {message["error_description"]}")
-            self.alert_label.show()
-        elif "errors" in message:
-            errors_details = message["errors"][0]
-            self.alert_label.setText(f"Sending Data Failed : {errors_details["longMessage"]}")
-            self.alert_label.show()
-        else:
-            self.alert_label.setText(f"The Data Has Been Send with {message["untreated_data"]} Untreated Data !")
             self.timer = QTimer()
-            self.timer.timeout.connect(self.close)
+            self.timer.timeout.connect(self.alert_label.hide)
             self.timer.start(1500)
+        except requests.exceptions.ConnectTimeout:
+            self.alert_label.setText(f"The Flask server is taking too long to respond")
+            self.alert_label.show()
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.alert_label.hide)
+            self.timer.start(1500)
+        else:
+            message = response.json()
+            if response.status_code != 200:
+                self.alert_label.setText(f"Sending Data Failed : {response.status_code} error")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+            elif "success" in message and message["success"] == False:
+                self.alert_label.setText(f"Sending Data Failed : {message["message"]}")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+            elif "error" in message:
+                self.alert_label.setText(f"Sending Data Failed : {message["error_description"]}")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+            elif "errors" in message:
+                errors_details = message["errors"][0]
+                self.alert_label.setText(f"Sending Data Failed : {errors_details["longMessage"]}")
+                self.alert_label.show()
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.alert_label.hide)
+                self.timer.start(1500)
+            else:
+                self.alert_label.setText(f"The Data Has Been Send with {message["untreated_data"]} Untreated Data !")
+                self.timer = QTimer()
+                self.timer.timeout.connect(self.close)
+                self.timer.start(1500)
 
