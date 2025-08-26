@@ -2,6 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 
+"""All the functions to handle the webhook discord and the send of the message with data"""
 
 def send_the_data(message_to_send):
     """This function send the complete analyzed from user requests into a user discord server using webhook.
@@ -22,7 +23,12 @@ def send_the_data(message_to_send):
         'flags': 4
             }
         #post the request using URl and payload
-        response = requests.post(webhook_url, json=data)
+        try:
+            response = requests.post(webhook_url, json=data)
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "message": "Impossible to contact the server, verify the Flask connection"}
+        except requests.exceptions.ConnectTimeout:
+            return {"success": False, "message": "The Flask server is taking too long to respond"}
 
         #check if success
         if response.status_code != 204:

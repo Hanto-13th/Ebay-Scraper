@@ -2,6 +2,7 @@ import sys
 from PyQt6.QtWidgets import QApplication
 from . import windows
 
+"""The entrypoint for the GUI part and users"""
 
 def main():
 

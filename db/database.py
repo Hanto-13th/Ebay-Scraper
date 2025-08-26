@@ -1,6 +1,9 @@
 import sqlite3
 
+"""All the functions to handle the DB and the requests (creation,deletion or read), return a success or not message formated in JSON and the results if they are one"""
+
 def decorate_for_handling_errors(func):
+    """A decorator to handle all the major errors in the sqlite DB"""
     def wrapper_func(*args, **kwargs):
 
         try: 
@@ -30,11 +33,10 @@ def create_database():
     a request build model is: 
     {"id"(handle automatically, used to identify request in DB),"product name","price to reach","option("SELL: 0 or "BUY: 1")","days_in_a_row (to see the days in a row the price is reached)"}"""
 
-    #open the DB and create table to stock user requests using the cursor
     with sqlite3.connect("Ebay Scraper.db") as connection:
         table = "CREATE TABLE IF NOT EXISTS user_requests (id INTEGER PRIMARY KEY AUTOINCREMENT," \
         "product TEXT NOT NULL," \
-        "price INTEGER NOT NULL," \
+        "price INTEGER NOT NULL CHECK (price > 0)," \
         "option INTEGER NOT NULL," \
         "days_in_a_row INTEGER NOT NULL)"
 
@@ -47,7 +49,6 @@ def create_requests_into_db(product,price,option):
         """Function to stock in DB the requests with user inputs, 
         take in arguments the name of product, the price to reach, the buy or sell option"""
 
-        #open the DB and stock user requests using the cursor
         with sqlite3.connect("Ebay Scraper.db") as connection:
             insertion_cursor = connection.cursor()
             insertion_cursor.execute("INSERT INTO user_requests (product, price, option, days_in_a_row) VALUES (?, ?, ?, ?)",
@@ -78,6 +79,7 @@ def delete_requests_into_db_table(id_to_delete):
 
 @decorate_for_handling_errors
 def delete_all_requests_into_db_table():
+    """Function to clear all the requests into the table."""
     with sqlite3.connect("Ebay Scraper.db") as connection:
         delete_cursor = connection.cursor()
         delete_cursor.execute("DELETE FROM user_requests")
@@ -96,6 +98,7 @@ def extract_requests_from_db_table():
 
 @decorate_for_handling_errors
 def update_product_attributes_into_db_table(attributes_product):
+    """Function to update the 'days in a rows' data in the table"""
     with sqlite3.connect("Ebay Scraper.db") as connection:
         update_cursor = connection.cursor()
         update_cursor.execute("UPDATE user_requests SET days_in_a_row = (?) WHERE product = (?)",(attributes_product.days_in_a_row,attributes_product.name))

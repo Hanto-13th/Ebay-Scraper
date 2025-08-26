@@ -1,3 +1,5 @@
+"""All the functions to analyze the data from the API response"""
+
 def analyze_data_from_the_call(all_articles_from_the_call):
     """The function will take all the articles from the call and search the median of products values and the min/max values of products,
     and format him in string,
@@ -77,24 +79,29 @@ def version_buy_or_sell(product_attributes):
         def wrapper(iterable):
             results = func(iterable)
             median_value,min_value,max_value,all_prices = results
-            text_for_the_mail = ""
+            text_for_the_message = ""
+            #if it's a product to sell
             if product_attributes.option == 0:
                 median = sum(all_prices)//len(all_prices)
                 median_min_value = median * 0.85
                 median_max_value = median * 1.15
-                text_for_the_mail = f"TO_SELL:\n{min_value}\n{max_value}\n{median_value}"
-                if median_min_value <= product_attributes.price_to_reach >= median_max_value:
+                text_for_the_message = f"TO_SELL:\n{min_value}\n{max_value}\n{median_value}"
+                #check if the price is within ±15% of the reference value
+                if median_min_value <= product_attributes.price_to_reach <= median_max_value:
                     product_attributes.days_in_a_row += 1
                 else:
                     product_attributes.days_in_a_row = 0
+                #if the price is within ±15% of the reference value during 5 days in a row, add an alert in the message
                 if product_attributes.days_in_a_row == 5:
-                    text_for_the_mail += "!!! ALERT: THE PRICE HAS REACHED THE AMOUNT YOU WANT = YOU CAN SELL IT !!!\n"
-                return text_for_the_mail,product_attributes
+                    text_for_the_message += "!!! ALERT: THE PRICE HAS REACHED THE AMOUNT YOU WANT = YOU CAN SELL IT !!!\n"
+                return text_for_the_message,product_attributes
+            #if it's a product to buy
             elif product_attributes.option == 1:
-                text_for_the_mail = f"TO_BUY:\n{min_value}"
+                text_for_the_message = f"TO_BUY:\n{min_value}"
+                #if the price is under the reference value, add an alert in the message
                 if product_attributes.price_to_reach <= min(all_prices):
-                    text_for_the_mail += "!!! ALERT: THE PRICE HAS REACHED THE AMOUNT YOU WANT = YOU CAN BUY IT !!!\n"
-                return text_for_the_mail,product_attributes
+                    text_for_the_message += "!!! ALERT: THE PRICE HAS REACHED THE AMOUNT YOU WANT = YOU CAN BUY IT !!!\n"
+                return text_for_the_message,product_attributes
             return results         
         return wrapper
     return decorator_buy_or_sell

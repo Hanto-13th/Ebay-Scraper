@@ -3,7 +3,7 @@ import os
 from base64 import b64encode
 from urllib.parse import quote
 
-
+"""All the functions to handle the call of Ebay API"""
 
 def get_access_token(production_env_enable):
     """Function to get the access token from Ebay endpoint to make a API call (client ID and client secret ID, watch the .env),
@@ -28,11 +28,17 @@ def get_access_token(production_env_enable):
     auth_endpoint = os.getenv("PROD_AUTH_ENDPOINT" if production_env_enable else "SAND_AUTH_ENDPOINT")
 
     #with the headers loaded with auth ID, post a request to get a Access Token to call API
-    authentification = requests.post(f"https://{auth_endpoint}/identity/v1/oauth2/token", headers=auth_headers, data=auth_data)
+    try:
+        authentification = requests.post(f"https://{auth_endpoint}/identity/v1/oauth2/token", headers=auth_headers, data=auth_data)
+    except requests.exceptions.ConnectionError:
+        return None,{"success": False, "message": "Impossible to contact the server, verify the Flask connection"}
+    except requests.exceptions.ConnectTimeout:
+        return None,{"success": False, "message": "The Flask server is taking too long to respond"}
+    #handle if the call missed
     if authentification.status_code != 200:
         error_message = authentification.json()
         return None,error_message
-    
+    #get the access token from the response
     access_token = authentification.json().get("access_token")
     return access_token,{"success": True, "message": "Message sent successfully!"}
 
@@ -51,15 +57,17 @@ def make_a_call(access_token,production_env_enable,product_name):
     #encode the filter "{AUCTION|FIXED_PRICE}" to make the call
     encoded_filter = quote('buyingOptions:{AUCTION|FIXED_PRICE}')
 
-
     #get a response from the "search" API with the call headers (a JSON string)
-    response = requests.get(f"https://{endpoint}/buy/browse/v1/item_summary/search?q={product_name}&limit=12&offset=0&filter={encoded_filter}", headers = call_headers)
-
+    try:
+        response = requests.get(f"https://{endpoint}/buy/browse/v1/item_summary/search?q={product_name}&limit=12&offset=0&filter={encoded_filter}", headers = call_headers)
+    except requests.exceptions.ConnectionError:
+        return None,{"success": False, "message": "Impossible to contact the server, verify the Flask connection"}
+    except requests.exceptions.ConnectTimeout:
+        return None,{"success": False, "message": "The Flask server is taking too long to respond"}
     #handle if the call missed
     if response.status_code != 200:
         error_message = response.json()
         return None,error_message
-    
     #get only the "products characterestics" part of data
     product_characacteristics_data = response.json().get("itemSummaries")
     return product_characacteristics_data,{"success": True, "message": "Message sent successfully!"}

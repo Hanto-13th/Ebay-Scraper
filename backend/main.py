@@ -5,13 +5,25 @@ from . import analyze_func
 from . import discord_webhook
 from . import ebay_call
 
+"""The main file for all the backend management"""
 
+
+#############################
+#  ______ _           _    
+# |  ____| |         | |   
+# | |__  | | __ _ ___| | __
+# |  __| | |/ _` / __| |/ /
+# | |    | | (_| \__ \   < 
+# |_|    |_|\__,_|___/_|\_\
+#
+#############################
 
 app = Flask(__name__)
 
-
+#create the database if not already created
 database.create_database()
 
+#handle all the route for the Flask server and return a success or not message in JSON
 @app.route('/create_requests_into_db',methods = ['POST'])
 def creation_requests():
     data = request.get_json()
@@ -41,6 +53,7 @@ def deletion_all_requests():
 @app.route('/run_full_ebay_process',methods = ['POST'])
 def run_full_ebay_process(is_prod = True):
     
+    #the message we compare along the process to check if nothing goes wrong 
     message_success_or_fail = {"success": True, "message": "Message sent successfully!"}
 
 
@@ -48,8 +61,6 @@ def run_full_ebay_process(is_prod = True):
     access_token,error_message = ebay_call.get_access_token(is_prod)
     if message_success_or_fail != error_message:
         message_success_or_fail = error_message
-        print(error_message)
-
         return jsonify(message_success_or_fail)
     
 
@@ -63,16 +74,15 @@ def run_full_ebay_process(is_prod = True):
 
     all_the_text = ""
     untreated_data = 0
-        #for each product from the users requests, make a call using the 'name' attribute in the object (instance of 'Product' class)
-        # after analyze the results in a decorated function 'analyze_data_from_the_call' which take in decorated arg the attributes in the product object
-        # and return based on your needs the min/max/median values (sell option) or just min value (buy option) converted in a string format
+    #for each product from the users requests, make a call using the 'name' attribute in the object (instance of 'Product' class)
+    # after analyze the results in a decorated function 'analyze_data_from_the_call' which take in decorated arg the attributes in the product object
+    # and return based on your needs the min/max/median values (sell option) or just min value (buy option) converted in a string format to send message
     for each_product in list_of_products:
 
 
         data_from_the_call,error_message = ebay_call.make_a_call(access_token,is_prod,each_product.name)
         if message_success_or_fail != error_message:
             message_success_or_fail = error_message
-            print(error_message)
             return jsonify(message_success_or_fail)
         
             
@@ -87,7 +97,7 @@ def run_full_ebay_process(is_prod = True):
             
         all_the_text += part_of_text+ "\n"
     
-    #render the message fro more lisibility
+    #render the message for more lisibility
     all_the_text_rendered = discord_webhook.render_message(all_the_text)
     #truncate the message each 2000 chars and return the message slice in a list
     message = discord_webhook.truncate_the_longest_msg(all_the_text_rendered)
@@ -98,6 +108,7 @@ def run_full_ebay_process(is_prod = True):
         message_success_or_fail = error_message
         return jsonify(message_success_or_fail)
 
+    #add the untreated data if they are
     message_success_or_fail["untreated_data"] = untreated_data
     return jsonify(message_success_or_fail)
 
