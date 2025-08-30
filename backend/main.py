@@ -63,8 +63,6 @@ def run_full_ebay_process(is_prod = True):
         message_success_or_fail = error_message
         return jsonify(message_success_or_fail)
     
-
-
     #extract requests formated in [(request 1),(request 2),(request 3), ...] and transform each product in instances
     # of the "Product" class with his attributes (name,price,option) to make easier manipulation and stock in a list
     data_from_requests = database.extract_requests_from_db_table()
@@ -79,14 +77,11 @@ def run_full_ebay_process(is_prod = True):
     # and return based on your needs the min/max/median values (sell option) or just min value (buy option) converted in a string format to send message
     for each_product in list_of_products:
 
-
         data_from_the_call,error_message = ebay_call.make_a_call(access_token,is_prod,each_product.name)
         if message_success_or_fail != error_message:
             message_success_or_fail = error_message
             return jsonify(message_success_or_fail)
         
-            
-
         decorate_analyze_data_from_the_call = analyze_func.version_buy_or_sell(each_product)(analyze_func.analyze_data_from_the_call)
         try:
             part_of_text,new_product_attributes = decorate_analyze_data_from_the_call(data_from_the_call)

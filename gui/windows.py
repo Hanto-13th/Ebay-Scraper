@@ -132,10 +132,10 @@ class Creation_Window(QMainWindow):
         if len(data) == 3:
             self.alert_label.hide()
             try:
-                response = requests.post("http://127.0.0.1:5000/create_requests_into_db",json=data,timeout=5)
+                response = requests.post("http://127.0.0.1:5000/create_requests_into_db",json=data,timeout=(5, 30))
             except requests.exceptions.ConnectionError:
                 templates.display_alert(self,self.alert_label,"Impossible to contact the server, verify the Flask connection",1500,self.alert_label.hide)
-            except requests.exceptions.ConnectTimeout:
+            except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
                 templates.display_alert(self,self.alert_label,"The Flask server is taking too long to respond",1500,self.alert_label.hide)
             else:
                 message = response.json()
@@ -180,10 +180,10 @@ class Read_Window(QMainWindow):
 
         #recieve the data to display the requests on the GUI
         try:
-            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=5)
+            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=(5, 30))
         except requests.exceptions.ConnectionError:
             templates.display_alert(self,self.display_requests,"Impossible to contact the server, verify the Flask connection","inf",None)
-        except requests.exceptions.ConnectTimeout:
+        except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
             templates.display_alert(self,self.display_requests,"The Flask server is taking too long to respond","inf",None)
         else:
             message = response.json()
@@ -244,10 +244,10 @@ class Deletion_Window(QMainWindow):
 
         #recieve the data to display the requests on the GUI
         try:
-            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=5)
+            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=(5, 30))
         except requests.exceptions.ConnectionError:
             templates.display_alert(self,self.display_requests,"Impossible to contact the server, verify the Flask connection","inf",None)
-        except requests.exceptions.ConnectTimeout:
+        except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
             templates.display_alert(self,self.display_requests,"The Flask server is taking too long to respond","inf",None)
         else:
             message = response.json()
@@ -274,10 +274,10 @@ class Deletion_Window(QMainWindow):
                 data["id"] = int(id_to_delete)
                 self.alert_label.hide()
                 try:
-                    response = requests.post("http://127.0.0.1:5000/delete_requests_into_db_table",json=data,timeout=5)
+                    response = requests.post("http://127.0.0.1:5000/delete_requests_into_db_table",json=data,timeout=(5, 30))
                 except requests.exceptions.ConnectionError:
                     templates.display_alert(self,self.alert_label,"Impossible to contact the server, verify the Flask connection",1500,self.alert_label.hide)
-                except requests.exceptions.ConnectTimeout:
+                except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
                     templates.display_alert(self,self.alert_label,"The Flask server is taking too long to respond",1500,self.alert_label.hide)
                 else:
                     message = response.json()
@@ -288,10 +288,10 @@ class Deletion_Window(QMainWindow):
                     else:
                         templates.display_alert(self,self.alert_label,"Request Deleted !",500,self.alert_label.hide)
                         try:
-                            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=5)
+                            response = requests.get("http://127.0.0.1:5000/read_requests_into_db_table",timeout=(5, 30))
                         except requests.exceptions.ConnectionError:
                             templates.display_alert(self,self.display_requests,"Impossible to contact the server, verify the Flask connection","inf",None)
-                        except requests.exceptions.ConnectTimeout:
+                        except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
                             templates.display_alert(self,self.display_requests,"The Flask server is taking too long to respond","inf",None)
                         else:
                             message = response.json()
@@ -349,11 +349,11 @@ class All_Deletion_Window(QMainWindow):
     
     def all_deletion(self):
         try:
-            response = requests.post("http://127.0.0.1:5000/delete_all_requests_into_db_table",timeout=5)
+            response = requests.post("http://127.0.0.1:5000/delete_all_requests_into_db_table",timeout=(5, 30))
         except requests.exceptions.ConnectionError:
             templates.display_alert(self,self.alert_label,"Impossible to contact the server, verify the Flask connection","inf",None)
 
-        except requests.exceptions.ConnectTimeout:
+        except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
             templates.display_alert(self,self.alert_label,"The Flask server is taking too long to respond","inf",None)
         else:
             message = response.json()
@@ -384,7 +384,7 @@ class Send_Data_Window(QMainWindow):
         #widget templates
         self.title = templates.title_template("Send Data",170,40,30)
         self.alert_label = templates.label_template("Do you want to recieve the data on your Discord ?",600,20)
-        self.button_yes = templates.button_template("Yes",50, 30,self.send_data)
+        self.button_yes = templates.button_template("Yes",50, 30,self.wait_data)
         self.button_no = templates.button_template("No",50, 30,self.back_window)
 
         #second layout management
@@ -404,14 +404,16 @@ class Send_Data_Window(QMainWindow):
     def back_window(self):
         self.close()
 
-    def send_data(self):
+    def wait_data(self):
+        templates.display_alert(self,self.alert_label,"Wait ...",1000,self.send_data)
 
+    def send_data(self):
         try:
-            response = requests.post("http://127.0.0.1:5000/run_full_ebay_process",timeout=5)
+            response = requests.post("http://127.0.0.1:5000/run_full_ebay_process",timeout=(5, 30))
         except requests.exceptions.ConnectionError:
             templates.display_alert(self,self.alert_label,"Impossible to contact the server, verify the Flask connection","inf",None)
 
-        except requests.exceptions.ConnectTimeout:
+        except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
             templates.display_alert(self,self.alert_label,"The Flask server is taking too long to respond","inf",None)
         else:
             message = response.json()
@@ -425,6 +427,6 @@ class Send_Data_Window(QMainWindow):
                 errors_details = message["errors"][0]
                 templates.display_alert(self,self.alert_label,f"Sending Data Failed : {errors_details["longMessage"]}","inf",None)
             else:
-                templates.display_alert(self,self.alert_label,f"The Data Has Been Send with {message["untreated_data"]} Untreated Data !",1500,self.close)
+                templates.display_alert(self,self.alert_label,f"The Data Has Been Send with {message["untreated_data"]} Untreated Data !",2000,self.close)
 
 

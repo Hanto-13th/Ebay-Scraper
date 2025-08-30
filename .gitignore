@@ -1,3 +1,6 @@
+#files and folders to ignore for Git
+#do NOT commit secrets, temporary files, or local environments
+
 #environment variables !!! DONT SHARE, API SECURITY KEY !!!
 .env
 
@@ -10,10 +13,6 @@ Ebay Scraper.db
 #step by step file
 step.txt
 
-#file don't use by users
-run_db.py
-db/main.py
-
 #python-generated files
 __pycache__/
 .idea/
@@ -22,3 +21,5 @@ __pycache__/
 *.pyo
 *.pyd
 *.swp
+*.log
+*.tmp

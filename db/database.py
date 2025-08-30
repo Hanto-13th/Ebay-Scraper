@@ -31,18 +31,28 @@ def decorate_for_handling_errors(func):
 def create_database():
     """Function to create database sqlite to stock user requests,
     a request build model is: 
-    {"id"(handle automatically, used to identify request in DB),"product name","price to reach","option("SELL: 0 or "BUY: 1")","days_in_a_row (to see the days in a row the price is reached)"}"""
+    
+    {"id"(handle automatically, used to identify request in DB),"product name","price to reach", 
+    "option("SELL: 0 or "BUY: 1")","days_in_a_row (to see the days in a row the price is reached)"}
+
+    and create a trigger to limit the user max requests (20 max)."""
 
     with sqlite3.connect("Ebay Scraper.db") as connection:
-        table = "CREATE TABLE IF NOT EXISTS user_requests (id INTEGER PRIMARY KEY AUTOINCREMENT," \
+        table = "CREATE TABLE IF NOT EXISTS user_requests (id INTEGER PRIMARY KEY," \
         "product TEXT NOT NULL," \
         "price INTEGER NOT NULL CHECK (price > 0)," \
         "option INTEGER NOT NULL," \
         "days_in_a_row INTEGER NOT NULL)"
-
+        trigger_limit_requests = "CREATE TRIGGER IF NOT EXISTS limit_user_requests " \
+            "BEFORE INSERT ON user_requests " \
+            "WHEN (SELECT COUNT(*) FROM user_requests) >= 20 " \
+            "BEGIN " \
+                "SELECT RAISE(FAIL, 'maximum requests reached (max 20)'); " \
+            "END;"
         creation_cursor = connection.cursor()
         creation_cursor.execute(table)
-        connection.commit()
+        creation_cursor.execute(trigger_limit_requests)
+
 
 @decorate_for_handling_errors
 def create_requests_into_db(product,price,option):
@@ -53,7 +63,6 @@ def create_requests_into_db(product,price,option):
             insertion_cursor = connection.cursor()
             insertion_cursor.execute("INSERT INTO user_requests (product, price, option, days_in_a_row) VALUES (?, ?, ?, ?)",
                                      (product, price, option, 0))
-            connection.commit()
 
 @decorate_for_handling_errors
 def read_requests_into_db_table():
@@ -70,11 +79,13 @@ def read_requests_into_db_table():
 
 @decorate_for_handling_errors
 def delete_requests_into_db_table(id_to_delete):
-    """Function to delete a row using his ID into the table."""
+    """Function to delete a row using his ID into the table and handle if the id is not found in the table"""
 
     with sqlite3.connect("Ebay Scraper.db") as connection:
         delete_cursor = connection.cursor()
         delete_cursor.execute("DELETE FROM user_requests WHERE id = (?)",(id_to_delete,))
+        if delete_cursor.rowcount == 0:
+            raise sqlite3.DatabaseError(f"No entry found with this ID {id_to_delete}.")
 
 
 @decorate_for_handling_errors

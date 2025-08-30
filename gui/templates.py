@@ -24,6 +24,7 @@ def button_template(name,width,height,connect_func):
                             "font-size: 12px;" \
                             "font-weight: bold;" \
                         "color: #33324D")
+        
         return new_button
 
 def back_button_template(name,widget,geometry,connect_func):

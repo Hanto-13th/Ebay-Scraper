@@ -24,10 +24,10 @@ def send_the_data(message_to_send):
             }
         #post the request using URl and payload
         try:
-            response = requests.post(webhook_url, json=data)
+            response = requests.post(webhook_url, json=data,timeout=(5, 30))
         except requests.exceptions.ConnectionError:
             return {"success": False, "message": "Impossible to contact the server, verify the Flask connection"}
-        except requests.exceptions.ConnectTimeout:
+        except (requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout):
             return {"success": False, "message": "The Flask server is taking too long to respond"}
 
         #check if success
