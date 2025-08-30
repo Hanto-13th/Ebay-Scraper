@@ -61,9 +61,9 @@ def make_a_call(access_token,production_env_enable,product_name):
     category_suggestions = []
     category_id = None
     try:
-        tree = requests.get("https://api.ebay.com/commerce/taxonomy/v1/get_default_category_tree_id?marketplace_id=EBAY_FR",headers=call_headers,timeout=(5, 30))
+        tree = requests.get(f"https://{endpoint}/commerce/taxonomy/v1/get_default_category_tree_id?marketplace_id=EBAY_FR",headers=call_headers,timeout=(5, 30))
         category_tree_id = tree.json()["categoryTreeId"]
-        suggestions = requests.get(f"https://api.ebay.com/commerce/taxonomy/v1/category_tree/{category_tree_id}/get_category_suggestions?q={product_name}",headers=call_headers,timeout=(5, 30))
+        suggestions = requests.get(f"https://{endpoint}/commerce/taxonomy/v1/category_tree/{category_tree_id}/get_category_suggestions?q={product_name}",headers=call_headers,timeout=(5, 30))
         category_suggestions = suggestions.json().get("categorySuggestions", [])
     except (requests.exceptions.ConnectionError,requests.exceptions.ConnectTimeout,requests.exceptions.ReadTimeout,ValueError):
         category_suggestions = []
