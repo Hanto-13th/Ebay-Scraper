@@ -3,9 +3,9 @@
 A Python project to scrape eBay listings automatically.  
 It includes a **Flask backend** for API handling and a **PyQt6 GUI** for easy interaction.  
 
-> ⚠️ Some scripts (like `run_backend.py`) are for debugging purposes only.
-> ⚠️ When you create a request, you should be as precise as possible in your product name and be sure to write more details.
-- Even though I’ve tried try to get the best results for each product, i'm not responsable for sales announcement from the eBay website and disappointment could be arrived
+- ⚠️ Some scripts (like `run_backend.py`) are for debugging purposes only.
+- ⚠️ When you create a request, you should be as precise as possible in your product name and be sure to write more details.
+- ⚠️ Even though I’ve tried try to get the best results for each product, i'm not responsable for sales announcement from the eBay website and disappointment could be arrived
 
 ---
 
@@ -15,9 +15,9 @@ It includes a **Flask backend** for API handling and a **PyQt6 GUI** for easy in
 - Automatic product search on eBay browse API and receive data from the twelve most appropriate items
 - Category suggestions using eBay taxonomy API
 - Create BUY or SELL options for each product and receive an alert when the price reaches the price in the user request
-> **Receive product with minimum value and his URL for BUY option and products with minimum/maximum values and median of all products with their URL for SELL option**
-> *The alert is triggered for the SELL option if the price is within ±15% of the reference value during 5 days in a row*
-> *The alert is triggered for the BUY option if the price is under the reference value*
+    1. **Receive product with minimum value and his URL for BUY option and products with minimum/maximum values and median of all products with their URL for SELL option**
+    2. *The alert is triggered for the SELL option if the price is within ±15% of the reference value during 5 days in a row*
+    3. *The alert is triggered for the BUY option if the price is under the reference value*
 - Flask backend API
 - PyQt6 GUI for local interaction
 - Easy to configure for your own API keys
@@ -42,8 +42,8 @@ python -m venv .venv
 
 3. Activate the virtual environment:
 
-- Windows: `.venv\Scripts\activate`
-- macOS/Linux: `source .venv/bin/activate`
+- Windows:  `.venv\Scripts\activate`
+- macOS/Linux:  `source .venv/bin/activate`
 
 4. Install dependencies:
 
@@ -53,8 +53,8 @@ pip install -r requirements.txt
 
 5. Add your .env file with your API keys (not included in repo) following the .env_exemple (copy .env_example to .env and fill your keys):
 
-EBAY_API_KEY=your_ebay_api_key
-DISCORD_WEBHOOK_URL=your_discord_webhook
+- EBAY_API_KEY=your_ebay_api_key
+- DISCORD_WEBHOOK_URL=your_discord_webhook
 
 ---
 
@@ -71,7 +71,7 @@ python run_backend.py
 ```bash
 python run_db.py
 ```
-> ⚠️ It is important that the backend is running first as the GUI communicates with it.
+⚠️ It is important that the backend is running first as the GUI communicates with it.
 
 ---
 
@@ -86,31 +86,29 @@ python run_db.py
 
 ## Structure
 
-.
-|
-|-- backend
-|   |-- __init__.py
-|   |-- analyze_func.py 
-|   |-- discord_webhook.py
-|   |-- ebay_call.py
-|   |-- main.py
-|   `-- product_class.py
-|-- db
-|   |-- __init__.py
-|   |-- database.py
-|   `-- main.py
-|-- gui
-|   |-- __init__.py
-|   |-- main.py
-|   |-- templates.py
-|   `-- windows.py
-|
-|-- Ebay Scraper.db
-|-- README.md
-|-- requirements.txt
-|-- run_backend.py
-|-- run_db.py
-|-- run_scraper_app.py
+Ebay-Scraper/
+├─ backend/
+│  ├─ __init__.py
+│  ├─ analyze_func.py
+│  ├─ discord_webhook.py
+│  ├─ ebay_call.py
+│  ├─ main.py
+│  └─ product_class.py
+├─ db/
+│  ├─ __init__.py
+│  ├─ database.py
+│  └─ main.py
+├─ gui/
+│  ├─ __init__.py
+│  ├─ main.py
+│  ├─ templates.py
+│  └─ windows.py
+├─ Ebay Scraper.db
+├─ README.md
+├─ requirements.txt
+├─ run_backend.py
+├─ run_db.py
+└─ run_scraper_app.py
 
 ---
 
